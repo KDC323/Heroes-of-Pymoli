@@ -1,0 +1,94 @@
+import pandas as pd
+import numpy as np
+import os
+import json
+json_path = 'raw_data\purchase_data.json'
+p_data_df = pd.read_json(json_path)
+p_data_df.head()
+players_csv = pd.read_csv ('raw_data\players.csv')
+p_data_df.head()
+players_csv.head()
+player_count = len(p_data_df['SN'].unique())
+player_count
+num_players_df = pd.DataFrame({"Number of Players":[player_count]})
+num_players_df
+item_count = len(p_data_df['Item ID'].unique())
+item_count
+avg_pp = round(p_data_df['Price'].mean(), 2)
+avg_pp
+ttlp = len(p_data_df['Price'])
+ttlp
+ttlr = round(p_data_df['Price'].sum(), 2)
+ttlr
+pur_analysis = pd.DataFrame({
+    "Number of Items":[item_count],
+    "Average Purchase Price": avg_pp,
+    "Total # of Purchases": ttlp,
+    "Total Revenue": ttlr
+})
+
+pur_analysis.style.format({'Average Purchase Price': '${:.2f}', 'Total Revenue': '${:,.2f}'})
+pur_analysis
+unique_players = p_data_df.drop_duplicates('SN')
+len(unique_players)
+unique_players = p_data_df.drop_duplicates('SN')
+len(unique_players)
+gender_perc = round(gender_breakdown/player_count*100)
+gender_perc.rename(columns = {"Gender": "Percent of Gender"})
+g_p_data_df = p_data_df.set_index(["Gender"])
+gen_norm=p_data_df.groupby(['Gender'])['Price']
+gen_price=p_data_df.groupby(["Gender"])['Price'].sum()
+gen_pur=p_data_df.groupby(["Gender"])['Price'].count()
+gen_norm_mean=p_data_df.groupby(["Gender"])['Price'].mean()
+avg_gen= round(gen_price/gen_pur,2)
+gen_norm_max=p_data_df.groupby(['Gender'])['Price'].max()
+gen_norm_min=p_data_df.groupby(['Gender'])['Price'].min()
+gen_norm_max.index
+gen_norm_d=(g_p_data_df["Price"]-gen_norm.min())/(gen_norm.max()-gen_norm.min())
+gen_norm_d = gen_norm_d.reset_index()
+g_p_data_df = g_p_data_df.reset_index()
+g_p_data_df["normalized"] = gen_norm_d["Price"]
+gen_ana=pd.DataFrame({"Purchase Count": gen_pur, "Average Purchase Price":avg_gen, "Total Purchase Value":gen_price})
+gen_ana= gen_ana.sort_values("Total Purchase Value", ascending=False)
+gen_ana= gen_ana[["Purchase Count", "Average Purchase Price", "Total Purchase Value"]]
+g_p_data_df.head()
+bins= [0, 25, 50, 75, 100]
+age_bin_value = [0, 9, 14, 19, 24, 29, 34, 39, 44, 100]
+age_bin_names = ['<10', '10-14', '15-19', '20-24', '25-29', '30-34', '35-39', '40-44', '45<']
+p_data_df["Age Demographics"]= pd.cut(p_data_df["Age"], age_bin_value, labels=age_bin_names)
+demographic_group = p_data_df.groupby("Age Demographics")
+p_data_df.head()
+p_data_group = p_data_df.groupby("Age Demographics")
+demographic_group.mean()
+sn_price=p_data_df.groupby(["SN"])['Price'].sum()
+sn_pur=p_data_df.groupby(["SN"])['Price'].count()
+sn_users=p_data_df.groupby(["SN"])
+avg_sn= round(sn_price/sn_pur,2)
+top_sn=pd.DataFrame({"Purchase Count": sn_pur, "Average Purchase Price":avg_sn, "Total Purchase Value":sn_price})
+top_sn= top_sn.sort_values("Total Purchase Value", ascending=False)
+top_sn= top_sn[["Purchase Count", "Average Purchase Price", "Total Purchase Value"]]
+
+top_sn.reset_index(inplace=True)
+top_sn.round(2)
+top_sn.head()
+by_itemid = p_data_df.groupby('Item ID')
+pur_by_item = pd.DataFrame(by_itemid['Item ID'].count()) #counts occurance of item ID by grouping by item ID
+pur_by_item.rename(columns = {"Item ID": "Number of Items Sold"}, inplace = True)
+pur_by_item
+ttlpchsvlu = pd.DataFrame(by_itemid['Price'].sum()) # sums Price grouped by item ID
+ttlpchsvlu.rename(columns = {"Price": "Revenue"}, inplace =True)
+
+
+no_dup_items = p_data_df.drop_duplicates('Item ID')
+ttlpchsvlu
+top5_pop = no_dup_items.merge(pur_by_item, left_on = "Item ID", right_index = True)
+top5_pop = top5_pop.merge(ttlpchsvlu, left_on = "Item ID", right_index = True)
+top5_pop = top5_pop[['Item ID', "Item Name", "Price", "Number of Items Sold", "Revenue"]]
+top5_pop.sort_values("Number of Items Sold", ascending = False, inplace = True)
+top5_pop = top5_pop.iloc[0:6][:] # Instead of top 5 did top six because 4 items had sales of 9 items each
+top5_pop
+top5_prof = no_dup_items.merge(pur_by_item, left_on = "Item ID", right_index = True)
+top5_prof = top5_prof.merge(ttlpchsvlu, left_on = "Item ID", right_index = True)
+top5_prof = top5_prof[['Item ID', "Item Name", "Number of Items Sold", "Price", "Revenue"]]
+top5_prof.sort_values("Revenue", ascending = False, inplace = True)
+top5_prof.head()
